@@ -1,0 +1,37 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: library-db-jenkins
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: librarydb
+    volumes:
+      - db_data_jenkins:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot1234"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: irujzulfiqar/library-app:latest
+    container_name: library-app-jenkins
+    restart: always
+    ports:
+      - "5001:5001"
+    environment:
+      RDS_HOSTNAME: db
+      RDS_USERNAME: root
+      RDS_PASSWORD: root1234
+      RDS_DB_NAME: librarydb
+      PORT: 5001
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data_jenkins:
